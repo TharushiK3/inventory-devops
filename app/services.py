@@ -5,6 +5,7 @@ from decimal import Decimal, InvalidOperation
 
 from app.db import get_connection
 
+PRODUCT_NOT_FOUND = "Product not found."
 
 def non_negative_integer(value, field_name):
     """Validate whole-number values such as stock quantities."""
@@ -118,7 +119,7 @@ def update_product(
             )
 
             if cursor.rowcount == 0:
-                raise ValueError("Product not found.")
+                raise ValueError(PRODUCT_NOT_FOUND)
     except sqlite3.IntegrityError:
         raise ValueError(
             "Product could not be updated. Check for a duplicate SKU."
@@ -139,7 +140,7 @@ def delete_product(database_path, product_id):
             )
 
             if cursor.rowcount == 0:
-                raise ValueError("Product not found.")
+                raise ValueError(PRODUCT_NOT_FOUND)
     except sqlite3.IntegrityError:
         raise ValueError(
             "Cannot delete a product with recorded sales."
@@ -169,7 +170,7 @@ def record_sale(database_path, product_id, quantity):
             ).fetchone()
 
             if product is None:
-                raise ValueError("Product not found.")
+                raise ValueError(PRODUCT_NOT_FOUND)
 
             if quantity > product["quantity"]:
                 raise ValueError("Insufficient stock for this sale.")

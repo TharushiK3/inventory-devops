@@ -29,6 +29,7 @@ from app.services import (
 
 
 bp = Blueprint("inventory", __name__)
+INDEX_ENDPOINT = "inventory.index"
 
 
 @bp.before_request
@@ -89,7 +90,7 @@ def add_product():
     except ValueError as error:
         flash(str(error), "error")
 
-    return redirect(url_for("inventory.index"))
+    return redirect(url_for(INDEX_ENDPOINT))
 
 
 @bp.post("/products/<int:product_id>/update")
@@ -105,7 +106,7 @@ def edit_product(product_id):
     except ValueError as error:
         flash(str(error), "error")
 
-    return redirect(url_for("inventory.index"))
+    return redirect(url_for(INDEX_ENDPOINT))
 
 
 @bp.post("/products/<int:product_id>/delete")
@@ -117,7 +118,7 @@ def remove_product(product_id):
     except ValueError as error:
         flash(str(error), "error")
 
-    return redirect(url_for("inventory.index"))
+    return redirect(url_for(INDEX_ENDPOINT))
 
 
 @bp.post("/products/<int:product_id>/sell")
@@ -133,7 +134,7 @@ def sell_product(product_id):
     except ValueError as error:
         flash(str(error), "error")
 
-    return redirect(url_for("inventory.index"))
+    return redirect(url_for(INDEX_ENDPOINT))
 
 
 @bp.get("/health")
