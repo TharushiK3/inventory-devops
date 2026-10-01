@@ -10,6 +10,10 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
+    triggers {
+        pollSCM('H/5 * * * *')
+    }
+
     stages {
         stage('Build') {
             steps {
@@ -114,7 +118,7 @@ pipeline {
                         allowEmptyArchive: true
                     )
                 }
-                        }
+            }
         }
 
         stage('Deploy') {
@@ -134,7 +138,7 @@ pipeline {
                         if errorlevel 1 exit /b 1
                     '''
                 }
-                        }
+            }
         }
 
         stage('Release') {
@@ -154,7 +158,7 @@ pipeline {
                         if errorlevel 1 exit /b 1
                     '''
                 }
-                        }
+            }
         }
 
         stage('Monitoring and Alerting') {
