@@ -114,6 +114,26 @@ pipeline {
                         allowEmptyArchive: true
                     )
                 }
+                        }
+        }
+
+        stage('Deploy') {
+            steps {
+                withCredentials([
+                    string(
+                        credentialsId: 'inventory-staging-secret',
+                        variable: 'STAGING_SECRET'
+                    )
+                ]) {
+                    bat '''
+                        @echo off
+                        docker compose -p inventory-staging -f compose.staging.yaml up -d --wait --wait-timeout 120
+                        if errorlevel 1 exit /b 1
+
+                        .venv\\Scripts\\python.exe -u scripts\\check_health.py --url http://127.0.0.1:5002 --environment staging --version %BUILD_NUMBER%
+                        if errorlevel 1 exit /b 1
+                    '''
+                }
             }
         }
     }

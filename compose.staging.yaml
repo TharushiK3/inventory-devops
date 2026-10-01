@@ -1,0 +1,17 @@
+services:
+  inventory:
+    image: "inventory-devops:build-${BUILD_NUMBER:?BUILD_NUMBER is required}"
+    container_name: inventory-staging
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5002:5000"
+    environment:
+      APP_ENV: staging
+      APP_VERSION: "${BUILD_NUMBER:?BUILD_NUMBER is required}"
+      SECRET_KEY: "${STAGING_SECRET:?STAGING_SECRET is required}"
+    volumes:
+      - staging-data:/app/instance
+
+volumes:
+  staging-data:
+    name: inventory-staging-data
