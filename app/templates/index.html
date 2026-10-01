@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Velvet Stock | Inventory</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main>
+    <header>
+        <div>
+            <p class="eyebrow">INVENTORY MANAGEMENT</p>
+            <h1>Velvet Stock<span>.</span></h1>
+            <p>Manage products, track stock and record sales.</p>
+        </div>
+        <a class="health-link" href="{{ url_for('inventory.health') }}">
+            Check health
+        </a>
+    </header>
+
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="notice {{ category }}" role="alert">{{ message }}</div>
+    {% endfor %}
+
+    <section class="stats" aria-label="Inventory summary">
+        <article><span>Products</span><strong>{{ products|length }}</strong></article>
+        <article><span>Units in stock</span><strong>{{ total_units }}</strong></article>
+        <article><span>Low-stock products</span><strong>{{ low_stock_count }}</strong></article>
+        <article>
+            <span>Sales revenue · LKR</span>
+            <strong>{{ "%.2f"|format(revenue_cents / 100) }}</strong>
+        </article>
+    </section>
+
+    <section class="panel">
+        <h2>Add a product</h2>
+        <form method="post" action="{{ url_for('inventory.add_product') }}"
+              class="product-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <label>SKU
+                <input name="sku" maxlength="40" required placeholder="PRD-001">
+            </label>
+            <label>Product name
+                <input name="name" maxlength="100" required>
+            </label>
+            <label>Price · LKR
+                <input name="price" type="number" min="0" max="10000000"
+                       step="0.01" required>
+            </label>
+            <label>Stock quantity
+                <input name="quantity" type="number" min="0" step="1"
+                       value="0" required>
+            </label>
+            <label>Low-stock threshold
+                <input name="threshold" type="number" min="0" step="1"
+                       value="5" required>
+            </label>
+            <button type="submit">Add product</button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>Products</h2>
+
+        {% for product in products %}
+        <article class="product">
+            <div class="product-heading">
+                <div>
+                    <h3>{{ product.name }}</h3>
+                    <p>{{ product.sku }} · LKR {{ "%.2f"|format(product.price_cents / 100) }}</p>
+                </div>
+                <span class="badge {% if product.quantity <= product.low_stock_threshold %}low{% endif %}">
+                    {{ product.quantity }} units
+                    {% if product.quantity <= product.low_stock_threshold %}
+                        · Low stock
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="actions">
+                <form method="post"
+                      action="{{ url_for('inventory.sell_product', product_id=product.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label>Quantity to sell
+                        <input name="quantity" type="number" min="1"
+                               step="1" value="1" required>
+                    </label>
+                    <button type="submit">Record sale</button>
+                </form>
+
+                <form method="post"
+                      action="{{ url_for('inventory.remove_product', product_id=product.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button class="danger" type="submit">Delete product</button>
+                </form>
+            </div>
+
+            <details>
+                <summary>Edit product / adjust stock</summary>
+                <form method="post" class="product-form"
+                      action="{{ url_for('inventory.edit_product', product_id=product.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <label>SKU
+                        <input name="sku" value="{{ product.sku }}"
+                               maxlength="40" required>
+                    </label>
+                    <label>Product name
+                        <input name="name" value="{{ product.name }}"
+                               maxlength="100" required>
+                    </label>
+                    <label>Price · LKR
+                        <input name="price" type="number" min="0"
+                               max="10000000" step="0.01"
+                               value="{{ "%.2f"|format(product.price_cents / 100) }}"
+                               required>
+                    </label>
+                    <label>Current stock quantity
+                        <input name="quantity" type="number" min="0" step="1"
+                               value="{{ product.quantity }}" required>
+                    </label>
+                    <label>Low-stock threshold
+                        <input name="threshold" type="number" min="0" step="1"
+                               value="{{ product.low_stock_threshold }}" required>
+                    </label>
+                    <button type="submit">Save changes</button>
+                </form>
+            </details>
+        </article>
+        {% else %}
+            <p class="empty">No products yet. Add your first product above.</p>
+        {% endfor %}
+    </section>
+
+    <section class="panel">
+        <h2>Sales history</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th><th>Quantity</th>
+                        <th>Total · LKR</th><th>Time · UTC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>{{ sale.name }} · {{ sale.sku }}</td>
+                        <td>{{ sale.quantity }}</td>
+                        <td>{{ "%.2f"|format(sale.total_cents / 100) }}</td>
+                        <td>{{ sale.sold_at }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4">No sales recorded yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer>Velvet Stock · {{ config.APP_ENV }} · {{ config.APP_VERSION }}</footer>
+</main>
+</body>
+</html>

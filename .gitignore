@@ -1,0 +1,20 @@
+# Python virtual environment and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local database and secrets
+instance/
+*.db
+*.sqlite
+*.sqlite3
+.env
+
+# Generated test and analysis reports
+.coverage
+htmlcov/
+coverage.xml
+junit.xml
+reports/
+.scannerwork/
