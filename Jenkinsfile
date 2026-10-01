@@ -67,7 +67,9 @@ pipeline {
                     }
                 }
             }
-        }        stage('Security') {
+        }
+
+        stage('Security') {
             steps {
                 bat '''
                     .venv\\Scripts\\python.exe -m pip install -r requirements-security.txt
@@ -75,7 +77,6 @@ pipeline {
                 '''
 
                 script {
-                    // Remove old reports so this build publishes fresh results.
                     bat '''
                         if exist reports\\security rmdir /s /q reports\\security
                         if errorlevel 1 exit /b 1
@@ -83,7 +84,6 @@ pipeline {
                         if errorlevel 1 exit /b 1
                     '''
 
-                    // Run both scans even if one reports a finding.
                     def banditStatus = bat(
                         returnStatus: true,
                         script: '''
