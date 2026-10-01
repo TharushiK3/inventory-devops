@@ -13,7 +13,6 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                // Build a Docker image tagged with this Jenkins build number.
                 bat '''
                     docker build -t inventory-devops:build-%BUILD_NUMBER% .
                     if errorlevel 1 exit /b 1
@@ -23,7 +22,6 @@ pipeline {
 
         stage('Test') {
             steps {
-                // Create a separate environment in the Jenkins workspace.
                 bat '''
                     python -m venv .venv
                     if errorlevel 1 exit /b 1
@@ -34,7 +32,6 @@ pipeline {
                     if errorlevel 1 exit /b 1
                 '''
 
-                // Fail if tests fail or application line coverage is below 80%.
                 bat '''
                     .venv\\Scripts\\python.exe -m pytest tests -v --cov=app --cov-fail-under=80 --cov-report=term-missing --cov-report=xml:coverage.xml --junitxml=junit.xml
                     if errorlevel 1 exit /b 1
@@ -43,13 +40,31 @@ pipeline {
 
             post {
                 always {
-                    // Publish reports even when tests fail.
                     junit testResults: 'junit.xml', allowEmptyResults: false
 
                     archiveArtifacts(
                         artifacts: 'coverage.xml',
                         allowEmptyArchive: true
                     )
+                }
+            }
+        }
+
+        stage('Code Quality') {
+            steps {
+                script {
+                    def scannerHome = tool 'InventoryScanner'
+
+                    withEnv(["SCANNER_HOME=${scannerHome}"]) {
+                        withSonarQubeEnv('InventorySonarQube') {
+                            bat '''
+                                @echo off
+                                set "SONAR_TOKEN=%SONAR_AUTH_TOKEN%"
+                                call "%SCANNER_HOME%\\bin\\sonar-scanner.bat"
+                                if errorlevel 1 exit /b 1
+                            '''
+                        }
+                    }
                 }
             }
         }
