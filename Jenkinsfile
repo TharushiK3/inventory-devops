@@ -154,6 +154,30 @@ pipeline {
                         if errorlevel 1 exit /b 1
                     '''
                 }
+                        }
+        }
+
+        stage('Monitoring and Alerting') {
+            steps {
+                bat '''
+                    @echo off
+                    if exist reports\\monitoring.json del reports\\monitoring.json
+
+                    docker compose -p inventory-monitoring -f compose.monitoring.yaml up -d
+                    if errorlevel 1 exit /b 1
+
+                    .venv\\Scripts\\python.exe -u scripts\\check_monitoring.py
+                    if errorlevel 1 exit /b 1
+                '''
+            }
+
+            post {
+                always {
+                    archiveArtifacts(
+                        artifacts: 'reports/monitoring.json',
+                        allowEmptyArchive: true
+                    )
+                }
             }
         }
     }

@@ -1,0 +1,62 @@
+services:
+  prometheus:
+    image: prom/prometheus:v3.13.3
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.28.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+    volumes:
+      - ./monitoring/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    networks:
+      - default
+      - staging
+      - production
+
+  alertmanager:
+    image: prom/alertmanager:v0.34.1
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --cluster.listen-address=
+    ports:
+      - "127.0.0.1:9093:9093"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+
+  alert-inbox:
+    image: python:3.13-slim
+    restart: unless-stopped
+    command: ["python", "-u", "/app/alert_inbox.py"]
+    ports:
+      - "127.0.0.1:9094:8080"
+    volumes:
+      - ./monitoring/alert_inbox.py:/app/alert_inbox.py:ro
+      - alert-inbox-data:/data
+
+volumes:
+  prometheus-data:
+  alertmanager-data:
+  alert-inbox-data:
+
+networks:
+  staging:
+    external: true
+    name: inventory-staging_default
+  production:
+    external: true
+    name: inventory-production_default

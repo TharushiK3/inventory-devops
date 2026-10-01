@@ -1,0 +1,20 @@
+groups:
+  - name: inventory-alerts
+    rules:
+      - alert: InventoryApplicationUnhealthy
+        expr: probe_success{job="inventory-health"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Inventory {{ $labels.environment }} is unhealthy"
+          description: "The application health check has failed for at least 30 seconds."
+
+      - alert: InventoryHealthProbeUnavailable
+        expr: up{job="inventory-health"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Monitoring cannot check {{ $labels.environment }}"
+          description: "Prometheus cannot collect the health probe results."
