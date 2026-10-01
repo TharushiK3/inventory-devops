@@ -134,6 +134,26 @@ pipeline {
                         if errorlevel 1 exit /b 1
                     '''
                 }
+                        }
+        }
+
+        stage('Release') {
+            steps {
+                withCredentials([
+                    string(
+                        credentialsId: 'inventory-production-secret',
+                        variable: 'PRODUCTION_SECRET'
+                    )
+                ]) {
+                    bat '''
+                        @echo off
+                        docker compose -p inventory-production -f compose.production.yaml up -d --wait --wait-timeout 120
+                        if errorlevel 1 exit /b 1
+
+                        .venv\\Scripts\\python.exe -u scripts\\check_health.py --url http://127.0.0.1:5003 --environment production --version %BUILD_NUMBER%
+                        if errorlevel 1 exit /b 1
+                    '''
+                }
             }
         }
     }

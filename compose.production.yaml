@@ -1,0 +1,17 @@
+services:
+  inventory:
+    image: "inventory-devops:build-${BUILD_NUMBER:?BUILD_NUMBER is required}"
+    container_name: inventory-production
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5003:5000"
+    environment:
+      APP_ENV: production
+      APP_VERSION: "${BUILD_NUMBER:?BUILD_NUMBER is required}"
+      SECRET_KEY: "${PRODUCTION_SECRET:?PRODUCTION_SECRET is required}"
+    volumes:
+      - production-data:/app/instance
+
+volumes:
+  production-data:
+    name: inventory-production-data
