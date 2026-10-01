@@ -46,9 +46,9 @@ cd inventory-devops
 
 python -m venv .venv
 
-.\\.venv\\Scripts\\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 
-.\\.venv\\Scripts\\python.exe run.py
+.\.venv\Scripts\python.exe run.py
 
 ```
 
@@ -66,7 +66,7 @@ Run from the repository folder in another PowerShell window:
 
 ```powershell
 
-.\\.venv\\Scripts\\python.exe -m pytest tests -v --cov=app --cov-fail-under=80 --cov-report=term-missing --cov-report=xml:coverage.xml --junitxml=junit.xml
+.\.venv\Scripts\python.exe -m pytest tests -v --cov=app --cov-fail-under=80 --cov-report=term-missing --cov-report=xml:coverage.xml --junitxml=junit.xml
 
 ```
 
@@ -76,11 +76,11 @@ The verified assessment build passed 28 tests with approximately 87% application
 
 ```powershell
 
-.\\.venv\\Scripts\\python.exe -m pip install -r requirements-security.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-security.txt
 
-.\\.venv\\Scripts\\python.exe -m bandit -r app run.py
+.\.venv\Scripts\python.exe -m bandit -r app run.py
 
-.\\.venv\\Scripts\\python.exe -m pip\_audit -r requirements.txt
+.\.venv\Scripts\python.exe -m pip_audit -r requirements.txt
 
 ```
 
@@ -94,7 +94,7 @@ The verified scans reported no Bandit findings and no known dependency vulnerabi
 
 docker build -t inventory-devops:local .
 
-docker run -d --name inventory-local -p 127.0.0.1:5001:5000 --mount source=inventory-local-data,target=/app/instance -e APP\_ENV=container-test -e APP\_VERSION=local inventory-devops:local
+docker run -d --name inventory-local -p 127.0.0.1:5001:5000 --mount source=inventory-local-data,target=/app/instance -e APP_ENV=container-test -e APP_VERSION=local inventory-devops:local
 
 ```
 
@@ -116,7 +116,7 @@ Check the container and application:
 
 docker ps --filter name=inventory-local
 
-.\\.venv\\Scripts\\python.exe -u scripts\\check\_health.py --url http://127.0.0.1:5001 --environment container-test --version local
+.\.venv\Scripts\python.exe -u scripts\check_health.py --url http://127.0.0.1:5001 --environment container-test --version local
 
 ```
 
@@ -155,11 +155,8 @@ Install the Jenkins plugins needed for:
 Configure these names exactly, because the Jenkinsfile references them:
 
 | Jenkins setting | Name |
-
 |---|---|
-
 | SonarQube server | `InventorySonarQube` |
-
 | SonarQube Scanner tool | `InventoryScanner` |
 
 For this setup, SonarQube is accessible from the Windows agent at:
@@ -179,15 +176,10 @@ The scanner waits for the SonarQube quality gate. A failed gate stops the pipeli
 Create credentials with Global scope:
 
 | Credential ID | Kind | Purpose |
-
 |---|---|---|
-
 | `github-inventory-read` | Username with password | Private GitHub checkout; use a GitHub access token as the password |
-
 | `sonarqube-inventory-token` | Secret text | SonarQube analysis token |
-
 | `inventory-staging-secret` | Secret text | Stable staging Flask secret key |
-
 | `inventory-production-secret` | Secret text | Stable production Flask secret key |
 
 Use different randomly generated secret keys for staging and production.
@@ -208,32 +200,24 @@ Create a Pipeline job with:
 
 - Credentials: the private repository checkout credential.
 
-- Branch: `\*/main`
+- Branch: `*/main`
 
 - Script path: `Jenkinsfile`
 
 Run the first build manually to load the pipeline configuration.
 
-The Jenkinsfile uses `pollSCM('H/5 \* \* \* \*')` to check for repository changes approximately every five minutes. A detected change triggers a build automatically.
+The Jenkinsfile uses `pollSCM('H/5 * * * *')` to check for repository changes approximately every five minutes. A detected change triggers a build automatically.
 
 ## Seven pipeline stages
 
 | Stage | Action |
-
 |---|---|
-
-| Build | Build `inventory-devops:build-<BUILD\_NUMBER>` |
-
+| Build | Build `inventory-devops:build-<BUILD_NUMBER>` |
 | Test | Run pytest, enforce minimum coverage and publish test results |
-
 | Code Quality | Analyse with SonarQube and enforce its quality gate |
-
 | Security | Run Bandit and pip-audit and archive JSON reports |
-
 | Deploy | Deploy staging and verify health, environment, version and homepage |
-
 | Release | Deploy the same image to production and verify it |
-
 | Monitoring and Alerting | Start monitoring services and check fresh successful probes for both environments |
 
 Concurrent builds are disabled. Failed checks prevent later stages from running.
@@ -243,11 +227,8 @@ Reports are available under the Jenkins build's artifacts. Test results also app
 ## Deployment environments
 
 | Environment | Application URL | Compose file |
-
 |---|---|---|
-
 | Staging | http://127.0.0.1:5002 | `compose.staging.yaml` |
-
 | Production | http://127.0.0.1:5003 | `compose.production.yaml` |
 
 Jenkins supplies the build number and environment credentials during deployment.
@@ -279,20 +260,16 @@ docker compose -p inventory-monitoring -f compose.monitoring.yaml up -d
 ```
 
 | Service | URL |
-
 |---|---|
-
 | Prometheus | http://localhost:9090 |
-
 | Alertmanager | http://localhost:9093 |
-
 | Alert inbox | http://localhost:9094/notifications |
 
 In Prometheus, execute:
 
 ```promql
 
-probe\_success{job="inventory-health"}
+probe_success{job="inventory-health"}
 
 ```
 
@@ -302,7 +279,7 @@ Run the monitoring verification script:
 
 ```powershell
 
-.\\.venv\\Scripts\\python.exe -u scripts\\check\_monitoring.py
+.\.venv\Scripts\python.exe -u scripts\check_monitoring.py
 
 ```
 
