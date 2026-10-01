@@ -67,6 +67,54 @@ pipeline {
                     }
                 }
             }
+        }        stage('Security') {
+            steps {
+                bat '''
+                    .venv\\Scripts\\python.exe -m pip install -r requirements-security.txt
+                    if errorlevel 1 exit /b 1
+                '''
+
+                script {
+                    // Remove old reports so this build publishes fresh results.
+                    bat '''
+                        if exist reports\\security rmdir /s /q reports\\security
+                        if errorlevel 1 exit /b 1
+                        mkdir reports\\security
+                        if errorlevel 1 exit /b 1
+                    '''
+
+                    // Run both scans even if one reports a finding.
+                    def banditStatus = bat(
+                        returnStatus: true,
+                        script: '''
+                            .venv\\Scripts\\python.exe -m bandit -r app run.py -f json -o reports/security/bandit.json
+                        '''
+                    )
+
+                    def auditStatus = bat(
+                        returnStatus: true,
+                        script: '''
+                            .venv\\Scripts\\python.exe -m pip_audit -r requirements.txt -f json -o reports/security/dependencies.json
+                        '''
+                    )
+
+                    echo "Bandit exit code: ${banditStatus}"
+                    echo "Dependency audit exit code: ${auditStatus}"
+
+                    if (banditStatus != 0 || auditStatus != 0) {
+                        error('Security scan failed. Review the archived reports.')
+                    }
+                }
+            }
+
+            post {
+                always {
+                    archiveArtifacts(
+                        artifacts: 'reports/security/*.json',
+                        allowEmptyArchive: true
+                    )
+                }
+            }
         }
     }
 }
